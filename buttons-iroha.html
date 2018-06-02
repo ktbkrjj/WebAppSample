@@ -13,11 +13,40 @@
         <script type="text/javascript">
         var iroha = "いろはにほへとちりぬるをわかよたれそつねならむうゐのおくやまけふこえてあさきゆめみしゑひもせす";
         var labelArray = iroha.split("");
+        arrayShuffle(labelArray);
+
+        function arrayShuffle (bs) {
+            for (var i=0; i<bs.length; i++) {
+                var r = Math.floor(Math.random()*bs.length);
+                var tmp = bs[i];
+                bs[i] = bs[r];
+                bs[r] = tmp;
+            }
+        }
+
+        var pushed = "";
         for (var i=0; i<labelArray.length; i++) {
             var b = document.createElement("button");
             b.innerHTML = labelArray[i];
+            b.onclick = button_clickHandler;
             $("buttons").appendChild(b);
         }
+
+        function button_clickHandler(e) {
+            var ch = e.target.innerHTML;
+            var tmp = pushed + ch;
+            if (iroha.substr(0, tmp.length) != tmp) {
+                alert("違います。次は「" + iroha.substr(pushed.length, 1) + "」");
+                return;
+            }
+            e.target.disable = true;
+            e.target.style.backgroundColor = "#909090";
+            pushed = tmp;
+            if (pushed == iroha) {
+                alert("おめでとうございます。ゲームクリアです。")
+            }
+        }
+
 
         function $(id) { return document.getElementById(id); }        
         </script>
