@@ -4,7 +4,6 @@
         <meta charset="UTF-8">
         <meta name="veiwport" content="width=320, user-scalable=no">
         <title>ボタン早押しゲーム～いろは歌</title>
-        <script type="text/javascript" src="node_modules/jquery/dist/jquery.js"></script>
     </head>
     <body>
         <h1>ボタン早押し</h1>
@@ -15,10 +14,11 @@
         var iroha = "いろはにほへとちりぬるをわかよたれそつねならむうゐのおくやまけふこえてあさきゆめみしゑひもせす";
         var labelArray = iroha.split("");
         for (var i=0; i<labelArray.length; i++) {
-            var b = $("button");
-            b.html(labelArray[i]);
-            $("#buttons").append(b);
+            var b = document.createElement("button");
+            b.innerHTML = labelArray[i];
+            $("buttons").appendChild(b);
         }
+        function $(id) { return document.getElementById(is); }
         </script>
     </body>
 </html>
