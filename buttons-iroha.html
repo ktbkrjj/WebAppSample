@@ -4,16 +4,42 @@
         <meta charset="UTF-8">
         <meta name="veiwport" content="width=320, user-scalable=no">
         <title>ボタン早押しゲーム～いろは歌</title>
+        <style>
+        button { width: 40px; height: 40px; font-size:12px; -webkit-border-radium:1px; border-radius:1px; }
+        #startButton {width:80%; }
+        </style>
     </head>
     <body>
         <h1>ボタン早押し</h1>
         <div style="width:310px;">
             <div id="buttons"></div>
+            <div id="mihon"></div>
+            <div>
+                <button id="startButton">開始</button>
+            </div>
         </div>
         <script type="text/javascript">
+        var startTime;
         var iroha = "いろはにほへとちりぬるをわかよたれそつねならむうゐのおくやまけふこえてあさきゆめみしゑひもせす";
         var labelArray = iroha.split("");
-        arrayShuffle(labelArray);
+        $("startButton").onclick = start;
+        $("mihon").innerHTML = iroha;
+        nextGame();
+        function nextGame() {
+            $("buttons").innerHTML = "";
+            $("startButton").style.visibility = "visible";
+        }
+        function start() {
+            $("startButton").style.visibility = "hidden";
+            arrayShuffle(labelArray);
+            for (var i = 0; i < labelArray.length; i++) {
+                var b = document.createElement("button");
+                b.innerHTML = labelArray[i];
+                b.onclick = button_clickHandler;
+                $("buttons").appendChild(b);
+            }
+            startTime = (new Date()).getTime();            
+        }
 
         function arrayShuffle (bs) {
             for (var i=0; i<bs.length; i++) {
@@ -25,13 +51,6 @@
         }
 
         var pushed = "";
-        for (var i=0; i<labelArray.length; i++) {
-            var b = document.createElement("button");
-            b.innerHTML = labelArray[i];
-            b.onclick = button_clickHandler;
-            $("buttons").appendChild(b);
-        }
-
         function button_clickHandler(e) {
             var ch = e.target.innerHTML;
             var tmp = pushed + ch;
@@ -43,7 +62,10 @@
             e.target.style.backgroundColor = "#909090";
             pushed = tmp;
             if (pushed == iroha) {
-                alert("おめでとうございます。ゲームクリアです。")
+                var now = new Date().getTime();
+                var tm = Math.floor((now - startTime) / 1000);
+                alert("おめでとうございます。ゲームクリアです。\n" + tm + "秒");
+                nextGame();
             }
         }
 
