@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="veiwport" content="width=320, user-scalable=no">
+        <title>ボタン早押しゲーム～いろは歌</title>
+        <script type="text/javascript" src="node_modules/jquery/dist/jquery.js"></script>
+    </head>
+    <body>
+        <h1>ボタン早押し</h1>
+        <div style="width:310px;">
+            <div id="buttons"></div>
+        </div>
+        <script type="text/javascript">
+        var iroha = "いろはにほへとちりぬるをわかよたれそつねならむうゐのおくやまけふこえてあさきゆめみしゑひもせす";
+        var labelArray = iroha.split("");
+        for (var i=0; i<labelArray.length; i++) {
+            var b = $("button");
+            b.html(labelArray[i]);
+            $("#buttons").append(b);
+        }
+        </script>
+    </body>
+</html>
