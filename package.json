@@ -15,5 +15,6 @@
   "bugs": {
     "url": "https://github.com/ktbkrjj/WebAppSample/issues"
   },
-  "homepage": "https://github.com/ktbkrjj/WebAppSample#readme"
+  "homepage": "https://github.com/ktbkrjj/WebAppSample#readme",
+  "devDependencies": {}
 }
