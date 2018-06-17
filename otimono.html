@@ -1,0 +1,259 @@
+<!DOCTYPE <!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=320, user-scalable=no">
+    <title>カラータイルフォー</title>
+    <style>
+    * { margin: 0; padding: 0; text-align: center; }
+    #start { width: 100%; font-size: 24px; }
+    #info  { padding: 4px; font-size: 24px; }
+    </style>
+</head>
+<body>
+    <div id="info">カラータイルフォー</div>
+    <canvas id="aCanvas" width="320" height="260"></canvas>
+    <br/>
+    <button id="start" onclick="start()">START</button>
+    <script type="text/javascript">
+    // キャンバスに関する変数の初期化
+    var aCanvas = $("aCanvas");
+    var ctx = aCanvas.getContext("2d");
+    var canvasW = aCanvas.width;
+    var canvasH = aCanvas.height;
+    var blockW = 20, blockH = 20;
+    var cols = Math.floor(canvasW/blockW); // フィールドの列数
+    var rows = Math.floor(canvasH/blockH); // フィールドの行数
+
+    // 落下ブロックのパターン定義
+    var blockColors = ["black", "#909090", "red", "green", "yellow"];
+    var blockPattern = [
+        [[2,2]],
+        [[3,4]],
+        [[2,4]],
+        [[4,4]],
+        [[3,2,3], [0,3,0]],
+        [[0,2,0], [2,3,2]],
+        [[0,3,0], [3,2,3], [0,3,0]]
+    ];
+
+    // ゲームに関する変数の初期化
+    var blocks = [];
+    var dropX, dropY, dropPattern;
+    var curX = 0;    // 次に落下ブロックをどちらに動かすかを表す
+    var curTurn = 0; // 次に落下ブロックを回転させるかどうかを表す
+    var touchX = -1, touchY;
+    var turnTimerID = 0;
+    var turnIndex = 0;
+    var score = 0;
+
+    // イベントの初期化
+    aCanvas.onmousedown = touchStart;
+    aCanvas.onmousemove = touchMove;
+    aCanvas.onmouseup = touchEnd;
+    aCanvas.ontouchstart = function(e) {
+        e.preventDefault();
+        touchStart(e.touches[0]);
+    };
+    aCanvas.ontouchmove = function(e) {
+        e.preventDefault();
+        touchMove(e.touches[0]);
+    };
+    aCanvas.ontouchend = function(e) {
+        e.preventDefault();
+        touchEnd(e.touches[0]);
+    };
+    function touchStart(e) {
+        touchX = e.clientX;
+        touchY = e.clientY;
+        curX = 0;
+        curTurn = 0;
+    }
+    function touchMove(e) {
+        if (touchX < 0) return;
+        // 移動量を調べる
+        var mx = Math.floor((e.clientX - touchX) / (blockW/2));
+        var my = Math.floor((e.clientY - touchY) / (blockH/2));
+        if (mx > 1)  { curX = 1; return; }
+        if (mx < -1) { curX = -1; return; }
+        if (my < -1) { curTurn = 1; touchX = -1; return; }
+    }
+    function touchEnd(e) {
+        touchX = -1;
+    }
+
+    // メイン処理
+    function start() {
+        initGame();
+        $("start").disaled = true;
+        log("start");
+        turnTimeID = setInterval(nextTurn, 200);
+    }
+    function stopGame() {
+        clearInterval(turnTimerID);
+        $("start").disabled = false;
+        log("ゲームオーバー[" + score + "点]");
+    }
+    function initGame() {
+        for (var i=0; i<rows * cols; i++) { blocks[i] = 0; }
+        for (var i=0; i<rows; i++) {
+            blocks[getIndex(0,i)] = 1;
+            blocks[getIndex(cols-1, i)] = 1;
+        }
+        for (var i=0; i<cols; i++) { blocks[getIndex(i, rows-1)] = 1; }
+        createNewPattern();
+        drawScreen(blocks);
+        score = 0;
+    }
+    function getIndex(col, row) { return (row * cols + col); }
+    // 新規落下ブロックの表示処理
+    function createNewPattern() {
+        dropY = 0;
+        dropX = 1 + Math.floor(Math.random()*(cols-5));
+        var r = Math.floor(Math.random() * blockPattern.length);
+        dropPattern = cloneArray(blockPattern[r]);
+        // 終了判定
+        if (!canSetPattern(blocks, dropX, dropY, dropPattern)) {
+            drawScreen(blocks);
+            stopGame();
+            return false;
+        }
+        return true;
+    }
+    function nextTurn() {
+        turnIndex++;
+        // 回転
+        if (curTurn) {
+            curTurn = 0;
+            var pat = cloneArray(dropPattern);
+            pat = rotateArray(pat);
+            if (canSetPattern(blocks, dropX, dropY, pat)) {
+                dropPattern = pat;
+                drawScreen(blocks);
+                return;
+            }
+        }
+        // 左右移動
+        if (curX != 0) {
+            var dx = dropX + curX, dy = dropY;
+            if (canSetPattern(blocks, dx, dy, dropPattern)) {
+                dropX = dx; dropY = dy; curX = 0;
+                drawScreen(blocks);
+            }
+        }
+        // ブロックの定着
+        if (!canSetPattern(blocks, dropX, dropY+1, dropPattern)) {
+            setPattern(blocks, dropX, dropY, dropPattern);
+            drawScreen(blocks);
+            removeBlocks();
+            if (!createNewPattern()) { return; }
+        }
+        // ブロックの落下は3回に1度のみ
+        if (turnIndex % 3 != 0) {
+            return;
+        }
+        dropY++;
+        var newBlocks = cloneArray(blocks);
+        setPattern(newBlocks, dropX, dropY, dropPattern, false);
+        drawScreen(newBlocks);
+    }
+
+    // 画面を描画する
+    function drawScreen(blocks) {
+        ctx.clearRect(0, 0, canvasW, canvasH);
+        for (var y=0; y<rows; y++) {
+            for (var x=0; x<cols; x++) {
+                var v = blocks[getIndex(x,y)]
+                ctx.fillStyle = blockColors[v];
+                ctx.fillRect(x*blockW, y*blockH, blockW, blockH);
+            }
+        }
+    }
+
+    // 隣り合ったブロックを消す
+    function removeBlocks() {
+        for (var y=0; y<rows-1; y++) {
+            for (var x=0; x<cols-1; x++) {
+                var v = blocks[getIndex(x,y)];
+                if (v == 0 || v == 1) { continue; }
+                var tmpBlocks = cloneArray(blocks);
+                var nums = removeBlockColor(tmpBlocks, x, y, v);
+                if (nums >= 4) {
+                    blocks = tmpBlocks;
+                    score += nums;
+                    log("カラータイルフォー[" + score + "点]");
+                    continue;
+                }
+            }
+        }
+        drawScreen(blocks);
+    }
+    // 再帰的に上下左右のブロックが同じ色のタイルを調べて消す
+    function removeBlockColor(blocks, x, y, color) {
+        if (blocks[getIndex(x, y)] != color || color == 0) { return 0; }
+        var nums = 0;
+        blocks[getIndex(x, y)] = 0;
+        nums += removeBlockColor(blocks, x-1, y, color);
+        nums += removeBlockColor(blocks, x, y-1, color);
+        nums += removeBlockColor(blocks, x+1, y, color);
+        nums += removeBlockColor(blocks, x, y+1, color);
+        return nums;
+    }
+    // ブロック管理用配列に新規ブロックをコピーする
+    // ブロック同士が衝突することなくコピーできればtrueを返す
+    function setPattern(blocks, x, y, pat) {
+        return _setPattern(blocks, x, y, pat, false);
+    }
+    // ブロックを配置可能かどうか調べる
+    function canSetPattern(blocks, x, y, pat) {
+        return _setPattern(blocks, x, y, pat, true);
+    }
+    function _setPattern(blocks, col, row, pat, test) {
+        for (var y=0; y<pat.length; y++) {
+            var line = pat[y];
+            for (var x=0; x<line.length; x++) {
+                var cell = line[x];
+                if (cell <= 0) { continue; }
+                var idx = getIndex(col + x, row + y);
+                if (blocks[idx] != 0) { return false; }
+                if (!test) { blocks[idx] = cell; }
+            }
+        }
+        return true;
+    }
+
+    // 配列を操作する関数
+    // 配列全体を複製する
+    function cloneArray(a) {
+        var b = [];
+        for (var i = 0; i < a.length; i++) {
+            var line = a[i];
+            if (line instanceof Array) line = cloneArray(line);
+            b.push(line);
+        }
+        return b;
+    }
+    function setArray2(a, x, y, v) {
+        while (y >= a.length) a.push([]);
+        while (x >= a[y].length) a[y].push(0);
+        a[y][x] = v;
+    }
+    function rotateArray(a) { // 配列全体を回転する
+        var b = [];
+        for (var y = 0; y < a.length; y++) {
+            for (var x = 0; x < a[y].length; x++) {
+                setArray2(b, (a.length - y - 1), x, a[y][x]);
+            }
+        }
+        return b;
+    }
+    // その他スコアなどの情報を表示する
+    function log(message) {
+        console.log(message);
+        $("info").innerHTML = message;
+    }
+
+    function $(id) {return document.getElementById(id); }
+    </script>
+</body>
+</html>

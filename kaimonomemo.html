@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html manifest="kaimonomemo.appcache">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <link rel="app-touch-icon" href="kaimonomemo.png"/>
+        <title>買い物メモ</title>
+    </head>
+    <body>
+        <!-- 買い物一覧ページ -->
+        <div id="list" data-role="page">
+            <h1>買い物メモ一覧</h1>
+            <div id="todo_div">
+                <input id="todo" type="text">
+                <button id="add" onclick="addItem()">+</button>
+            </div>
+            <p><ul id="list_ul" class="list"></ul></p>
+            <p class="ctrl">
+                <button onclick="showPage('history')">履歴の表示</button>
+            </p>
+        </div>
+        <!-- 履歴一覧ページ -->
+        <div id="history" data-role="page">
+            <h1>履歴一覧</h1>
+        </div>
+        <!-- 詳細ページ -->
+        <div id="history" data-role="page">
+            <h1 id="more_h1">詳細</h1>
+        </div>
+        <script type="text/javascript">
+        // グローバル変数の初期化
+        var APPKEY = "kaimonomemo.";
+
+        // 特定のページを表示する
+        showPage("history");
+        function showPage(id) {
+            var ps = document.querySelectorAll("dix[data-role='page']");
+            for (var i=0; i<ps.length; i++) {
+                var page = ps[i];
+                page.style.display = (id != page.id) ? "none" : "block";
+            }
+        }
+
+        function addItem() {
+            var todo = $("todo").value;
+            if (todo == "") { return; }
+            var count = parseInt(getS("item.count"));
+            if (isNan(count)) { count = 0; }
+            var t = (new Date()).getTime();
+            setSI("item", count, todo); // アイテム
+            setSI("status", count, 0);  // 未解決状態
+            setSI("ctime", count, t);   // 作成日時
+            setSI("mtime", count, 0);   // 更新日時
+            setS("item.count", count + 1);  // アイテム数
+            $("todo").value = "";  // テキストボックスを空にする
+            readTodoList("list");
+        }
+
+        function readTodoList(id) {
+            $(id + "_ul").innerHTML = "";  // リストを初期化
+            var count = getS("item.count");
+            if (count == undefined || count == 0) { return; }
+            for (var i=0; i<count; i++) {
+                if (id == "list") {
+                    if (status == 1) continue; // 解決済みなら表示しない
+                } else if (id == "history") {
+                    if (status == 0) continue; // アクティブなら表示しない
+                }
+                var item = getSI("item", i);
+                addListItem($(id + "_ul"), item, i);
+            }
+        }
+
+        function addListItem(parent, caption, index) {
+            var li = document.createElement("li");
+            var b  = document.createElement("button");
+            var s  = document.createElement("span");
+            b.innerHTML = "*";
+            b.onclick = removeItem;
+            li.appendChild(b);
+            s.innerHTML = " " + caption;
+            s.onclick = showMore;
+            li.appendChild(s);
+            b.index = s.index = index; // オブジェクトにindexプロパティを追加
+            parent.appendChild(li);
+        }
+
+        function removeItem(e) {
+            var index = e.target.index; // どのボタンが押されたかを取得
+            var v = (getSI("status", index) == 0) ? 1 : 0;
+            setSI("status", index, v);
+            setSI("mtime", index, (new Date). getTime());
+            if (v == 0) { showPage("history"); }
+            else { showPage("list"); }
+        }
+
+        // ストレージアクセス
+        function getS(key) {
+            return localStorage[APPKEY + key];
+        }
+        function setS(key, value) {
+            localStorage[APPKEY + key] = value;
+        }
+        function getSI(key, index) {
+            return localStorage[APPKEY + index + "." + key];
+        }
+        function setSI(key, index, value) {
+            localStorage[APPKEY + index + "." +  key] = value;
+        }
+        function $(is) { return document.getElementById(id); }
+        </script>
+    </body>
+</html>

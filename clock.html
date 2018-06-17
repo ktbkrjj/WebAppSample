@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="veiwport" content="width=320px">
+        <title>アナログ時計</title>
+        <style>*{margin:0; padding:0;}</style>
+    </head>
+    <body>
+        <canvas id="clockCanvas" width="320" height="320"></canvas>
+        <script type="text/javascript">
+        var ctx = $("clockCanvas").getContext("2d");
+        var clockCanvas = $("clockCanvas");
+        var canvasW = clockCanvas.width;
+        var canvasH = clockCanvas.height;
+        var centerX = clockCanvas.width / 2;
+        var centerY = clockCanvas.height / 2;
+        setInterval(showTime, 500);
+        function showTime() {
+            // 画面全体を消す
+            ctx.clearRect(0, 0, canvasW, canvasH);
+            // 時計の外周を描く
+            ctx.fillStyle = "#f0f0f0";
+            ctx.arc(centerX, centerY, centerX, 0, 2*Math.PI, true);
+            ctx.fill();
+            // 現在時刻を取得
+            var now = new Date();
+            var h = now.getHours() % 12;
+            var m = now.getMinutes();
+            var s = now.getSeconds();
+            // 現在時刻を描画
+            drawArrow(360 * (h/12),  90, 9, "blue");
+            drawArrow(360 * (m/60), 120, 6, "blue");
+            drawArrow(360 * (s/60), 150, 3, "red");
+        }
+        function drawArrow(angle_deg, length, width, color) {
+            angle_deg = angle_deg - 90; // 12時の方向を0度と考える
+            // 単位をラジアンに変換
+            var angle_rad = (angle_deg * Math.PI / 180);
+            // 座標を求める
+            var pointX = centerX + Math.cos(angle_rad) * length;
+            var pointY = centerY + Math.sin(angle_rad) * length;
+            // 針のグラフィックを描画
+            ctx.beginPath();
+            ctx.lineWidth = width;
+            ctx.strokeStyle = color;
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(pointX, pointY);
+            ctx.stroke();
+        }
+
+        function $(id) {return document.getElementById(id); }
+        </script>
+    </body>
+</html>
